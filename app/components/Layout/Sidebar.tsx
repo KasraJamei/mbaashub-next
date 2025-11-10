@@ -1,0 +1,77 @@
+// app/components/Layout/Sidebar.tsx
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+    FileText,
+    Megaphone,
+    MessageSquare,
+    Database,
+    Cloud,
+    ShieldCheck,
+    Mail,
+    BarChart3,
+    Settings,
+    LogOut
+} from 'lucide-react';
+
+const sidebarNavItems = [
+    { label: 'بررسی کلی پروژه', icon: FileText, href: '/main/dashboard' },
+    { label: 'کمپین های اعلان', icon: Megaphone, href: '/main/campaigns' },
+    { label: 'کمپین های پیام درون برنامه‌ای', icon: MessageSquare, href: '/main/in-app-messages' },
+    { label: 'پایگاه داده', icon: Database, href: '/main/database' },
+    { label: 'کدنویسی ابری', icon: Cloud, href: '/main/cloud-functions' },
+    { label: 'احراز هویت', icon: ShieldCheck, href: '/main/identity' },
+    { label: 'پیام رسان', icon: Mail, href: '/main/messaging' },
+    { label: 'تحلیل ها', icon: BarChart3, href: '/main/analytics' },
+    { label: 'تنظیمات', icon: Settings, href: '/main/settings' }
+];
+
+export const Sidebar = () => {
+    const pathname = usePathname();
+
+    return (
+        <aside className="fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex flex-col z-50 shadow-sm overflow-y-auto hidden md:flex" dir="rtl">
+
+            <div className="p-6 flex items-center justify-center">
+                <h1 className="text-2xl font-bold">
+                    <span className="text-indigo-600">M</span>
+                    <span className="text-gray-800">BaaS</span>
+                    <span className="text-indigo-600"> HUB</span>
+                </h1>
+            </div>
+
+            <nav className="flex-1 p-4 space-y-1">
+                {sidebarNavItems.map((item) => {
+                    const isActive = item.href === '/main/dashboard'
+                        ? pathname === item.href
+                        : pathname.startsWith(item.href);
+
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-center p-3 rounded-lg text-sm transition-all duration-200 ${isActive
+                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                        >
+                            <item.icon className={`w-5 h-5 ml-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'
+                                }`} />
+                            <span className="flex-1 text-right">{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            <div className="p-4 border-t border-gray-200">
+                <button className="flex items-center w-full p-3 rounded-lg text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50">
+                    <LogOut className="w-5 h-5 ml-3 text-gray-500" />
+                    <span className="flex-1 text-right">خروج از حساب</span>
+                </button>
+            </div>
+        </aside>
+    );
+};
