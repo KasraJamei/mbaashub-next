@@ -19,7 +19,7 @@ const IdentityOverviewPage = () => {
                     <p className="text-sm text-gray-600 mb-4 text-center">وضعیت فعلی سیستم</p>
                     <div className="flex justify-center gap-12">
                         <div className="flex items-center gap-3 text-center">
-                            <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center">
                                 <Check className="h-4 w-4 text-white" strokeWidth={3} />
                             </div>
                             <div>
@@ -27,7 +27,7 @@ const IdentityOverviewPage = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 text-center">
-                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
                                 <X className="h-4 w-4 text-white" strokeWidth={3} />
                             </div>
                             <div>

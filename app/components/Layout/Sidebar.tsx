@@ -33,7 +33,7 @@ export const Sidebar = () => {
     const pathname = usePathname();
 
     return (
-        <aside className="fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex flex-col z-50 shadow-sm overflow-y-auto hidden md:flex" dir="rtl">
+        <aside className="fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex-col z-50 shadow-sm overflow-y-auto hidden md:flex" dir="rtl">
 
             <div className="p-6 flex items-center justify-center">
                 <h1 className="text-2xl font-bold">
