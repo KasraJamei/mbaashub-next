@@ -1,7 +1,7 @@
 // app/components/Layout/Sidebar.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -14,7 +14,9 @@ import {
     Mail,
     BarChart3,
     Settings,
-    LogOut
+    LogOut,
+    Menu,
+    X
 } from 'lucide-react';
 
 const sidebarNavItems = [
@@ -31,47 +33,81 @@ const sidebarNavItems = [
 
 export const Sidebar = () => {
     const pathname = usePathname();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+    const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
     return (
-        <aside className="fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex-col z-50 shadow-sm overflow-y-auto hidden md:flex" dir="rtl">
+        <>
+            {/* Hamburger Button - فقط در موبایل نمایش داده می‌شود */}
+            <button
+                onClick={toggleMobileMenu}
+                className="fixed top-4 right-4 z-[60] p-2 rounded-lg bg-white border border-gray-200 shadow-sm md:hidden hover:bg-gray-50 transition-colors"
+                style={{ cursor: 'pointer' }}
+            >
+                {isMobileMenuOpen ? (
+                    <X className="w-6 h-6 text-gray-700" />
+                ) : (
+                    <Menu className="w-6 h-6 text-gray-700" />
+                )}
+            </button>
 
-            <div className="p-6 flex items-center justify-center">
-                <h1 className="text-2xl font-bold">
-                    <span className="text-indigo-600">M</span>
-                    <span className="text-gray-800">BaaS</span>
-                    <span className="text-indigo-600"> HUB</span>
-                </h1>
-            </div>
+            {/* Backdrop برای موبایل */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-[45] md:hidden"
+                    onClick={closeMobileMenu}
+                />
+            )}
 
-            <nav className="flex-1 p-4 space-y-1">
-                {sidebarNavItems.map((item) => {
-                    const isActive = item.href === '/main/dashboard'
-                        ? pathname === item.href
-                        : pathname.startsWith(item.href);
+            {/* Sidebar */}
+            <aside
+                className={`fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex-col z-50 shadow-lg overflow-y-auto transition-transform duration-300 ease-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
+                    } md:flex`}
+                dir="rtl"
+            >
+                <div className="p-6 flex items-center justify-center">
+                    <h1 className="text-2xl font-bold">
+                        <span className="text-indigo-600">M</span>
+                        <span className="text-gray-800">BaaS</span>
+                        <span className="text-indigo-600"> HUB</span>
+                    </h1>
+                </div>
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`flex items-center p-3 rounded-lg text-sm transition-all duration-200 ${isActive
-                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                                }`}
-                        >
-                            <item.icon className={`w-5 h-5 ml-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'
-                                }`} />
-                            <span className="flex-1 text-right">{item.label}</span>
-                        </Link>
-                    );
-                })}
-            </nav>
+                <nav className="flex-1 p-4 space-y-1">
+                    {sidebarNavItems.map((item) => {
+                        const isActive = item.href === '/main/dashboard'
+                            ? pathname === item.href
+                            : pathname.startsWith(item.href);
 
-            <div className="p-4 border-t border-gray-200">
-                <button className="flex items-center w-full p-3 rounded-lg text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50">
-                    <LogOut className="w-5 h-5 ml-3 text-gray-500" />
-                    <span className="flex-1 text-right">خروج از حساب</span>
-                </button>
-            </div>
-        </aside>
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={closeMobileMenu}
+                                className={`flex items-center p-3 rounded-lg text-sm transition-all duration-200 ${isActive
+                                        ? 'bg-indigo-50 text-indigo-600 font-medium'
+                                        : 'text-gray-700 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <item.icon className={`w-5 h-5 ml-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
+                                <span className="flex-1 text-right">{item.label}</span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                <div className="p-4 border-t border-gray-200">
+                    <button
+                        className="flex items-center w-full p-3 rounded-lg text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <LogOut className="w-5 h-5 ml-3 text-gray-500" />
+                        <span className="flex-1 text-right">خروج از حساب</span>
+                    </button>
+                </div>
+            </aside>
+        </>
     );
 };

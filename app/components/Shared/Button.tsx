@@ -12,7 +12,8 @@ export const Button: React.FC<ButtonProps> = ({
     className = '',
     ...props
 }) => {
-    const baseClasses = "flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-2 text-sm h-10 px-6 transform hover:scale-[1.02] active:scale-[0.98] !cursor-pointer disabled:!cursor-not-allowed disabled:opacity-50";
+    const baseClasses =
+        'flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-2 text-sm h-10 px-6 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50';
 
     let variantClasses = '';
 
@@ -38,6 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <button
             className={`${baseClasses} ${variantClasses} ${className}`}
+            style={{ cursor: props.disabled ? 'not-allowed' : 'pointer' }}
             {...props}
         >
             {children}
