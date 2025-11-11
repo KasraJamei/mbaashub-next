@@ -1,4 +1,3 @@
-// app/main/layout.tsx
 'use client';
 
 import React from 'react';
@@ -15,10 +14,8 @@ export default function MainLayout({
         <RolesProvider>
             <div className="flex min-h-screen bg-white">
                 <Sidebar />
-
                 <div className="flex-1 flex flex-col md:mr-64">
                     <Header />
-
                     <main className="flex-1 pt-20">
                         <div className="bg-blue-100 min-h-[calc(100vh-5rem)] p-6">
                             {children}

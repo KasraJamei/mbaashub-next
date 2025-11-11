@@ -31,7 +31,6 @@ export const RolesProvider = ({ children }: { children: ReactNode }) => {
     const [roles, setRoles] = useState<Role[]>(defaultRoles);
     const [mounted, setMounted] = useState(false);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         setMounted(true);
     }, []);

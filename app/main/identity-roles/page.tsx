@@ -282,7 +282,7 @@ const IdentityRolesPage = () => {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-fadeIn backdrop-blur-sm" onClick={handleBackdropClick}>
+                <div className="fixed inset-0 z-200 flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-fadeIn backdrop-blur-sm" onClick={handleBackdropClick}>
                     <div className="bg-white rounded-2xl p-5 sm:p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
                         <div className="flex justify-between items-center mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-gray-100">
                             <div className="flex items-center gap-2 sm:gap-3">

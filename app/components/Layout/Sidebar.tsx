@@ -43,7 +43,7 @@ export const Sidebar = () => {
             {/* Hamburger Button - فقط در موبایل نمایش داده می‌شود */}
             <button
                 onClick={toggleMobileMenu}
-                className="fixed top-4 right-4 z-[60] p-2 rounded-lg bg-white border border-gray-200 shadow-sm md:hidden hover:bg-gray-50 transition-colors"
+                className="fixed top-4 right-4 z-60 p-2 rounded-lg bg-white border border-gray-200 shadow-sm md:hidden hover:bg-gray-50 transition-colors"
                 style={{ cursor: 'pointer' }}
             >
                 {isMobileMenuOpen ? (
@@ -56,7 +56,7 @@ export const Sidebar = () => {
             {/* Backdrop برای موبایل */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 z-[45] md:hidden"
+                    className="fixed inset-0 bg-black/40 z-45 md:hidden"
                     onClick={closeMobileMenu}
                 />
             )}
