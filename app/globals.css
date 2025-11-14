@@ -1,16 +1,12 @@
 @import "tailwindcss";
 
-/* تنظیم فونت Inter به عنوان پیش‌فرض */
 @layer base {
   html {
     font-family: 'Inter', sans-serif;
   }
 }
 
-/* سبک‌های عمومی برای پروژه RTL */
 body {
   direction: rtl;
-  /* تنظیم جهت نوشتار از راست به چپ */
   background-color: #f3f4f6;
-  /* رنگ پس‌زمینه سایت */
 }
