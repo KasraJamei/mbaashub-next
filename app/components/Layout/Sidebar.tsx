@@ -1,9 +1,8 @@
-// app/components/Layout/Sidebar.tsx
 'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
     FileText,
     Megaphone,
@@ -18,6 +17,9 @@ import {
     Menu,
     X
 } from 'lucide-react';
+import { Notification } from '@/app/components/Shared/Notification';
+import { useNotification } from '@/hooks/useNotification';
+import { removeAuthToken } from '@/lib/auth';
 
 const sidebarNavItems = [
     { label: 'بررسی کلی پروژه', icon: FileText, href: '/main/dashboard' },
@@ -33,14 +35,30 @@ const sidebarNavItems = [
 
 export const Sidebar = () => {
     const pathname = usePathname();
+    const router = useRouter();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { notification, showNotification, hideNotification } = useNotification();
 
     const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+    const handleLogout = () => {
+        removeAuthToken();
+        showNotification("success", "با موفقیت از حساب خارج شدید");
+        setTimeout(() => {
+            router.push('/auth?view=login');
+        }, 1000);
+    };
+
     return (
         <>
-            {/* Hamburger Button - فقط در موبایل نمایش داده می‌شود */}
+            {notification.isVisible && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={hideNotification}
+                />
+            )}
             <button
                 onClick={toggleMobileMenu}
                 className="fixed top-4 right-4 z-60 p-2 rounded-lg bg-white border border-gray-200 shadow-sm md:hidden hover:bg-gray-50 transition-colors"
@@ -53,7 +71,6 @@ export const Sidebar = () => {
                 )}
             </button>
 
-            {/* Backdrop برای موبایل */}
             {isMobileMenuOpen && (
                 <div
                     className="fixed inset-0 bg-black/40 z-45 md:hidden"
@@ -61,7 +78,6 @@ export const Sidebar = () => {
                 />
             )}
 
-            {/* Sidebar */}
             <aside
                 className={`fixed right-0 top-0 h-full w-64 bg-white border-l border-gray-200 flex-col z-50 shadow-lg overflow-y-auto transition-transform duration-300 ease-out ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
                     } md:flex`}
@@ -87,8 +103,8 @@ export const Sidebar = () => {
                                 href={item.href}
                                 onClick={closeMobileMenu}
                                 className={`flex items-center p-3 rounded-lg text-sm transition-all duration-200 ${isActive
-                                        ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
+                                    : 'text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 <item.icon className={`w-5 h-5 ml-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
@@ -100,6 +116,7 @@ export const Sidebar = () => {
 
                 <div className="p-4 border-t border-gray-200">
                     <button
+                        onClick={handleLogout}
                         className="flex items-center w-full p-3 rounded-lg text-sm text-gray-700 transition-all duration-200 hover:bg-gray-50"
                         style={{ cursor: 'pointer' }}
                     >
