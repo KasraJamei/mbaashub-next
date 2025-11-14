@@ -1,13 +1,6 @@
-import LandingHero from "@/app/components/LandingHero";
-import LandingFeatures from "@/app/components/LandingFeatures";
-import LandingFooter from "@/app/components/LandingFooter";
+import { redirect } from 'next/navigation';
 
-export default function Landing() {
-    return (
-        <main>
-            <LandingHero />
-            <LandingFeatures />
-            <LandingFooter />
-        </main>
-    );
+export default function MainPage() {
+    redirect('/main/dashboard');
+    return null;
 }
