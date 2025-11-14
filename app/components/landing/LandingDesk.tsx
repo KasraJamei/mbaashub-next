@@ -1,54 +1,34 @@
 // app/components/landing/LandingDesk.tsx
 export default function LandingDesk() {
     return (
-        <section className="py-16 px-4 bg-white">
-            <div className="max-w-7xl mx-auto text-center mb-8">
-                <h2 className="text-3xl font-bold text-blue-900 mb-6">میز خدمات</h2>
-            </div>
-            <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-8 items-center">
-                <div className="order-2 lg:order-1">
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <div>
-                                <h3 className="font-bold text-blue-900 mb-1">احراز هویت</h3>
-                                <p className="text-blue-700 text-sm">سیستم کامل احراز هویت، ثبت‌نام، ورود و مدیریت کاربران</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <div>
-                                <h3 className="font-bold text-blue-900 mb-1">بانک داده</h3>
-                                <p className="text-blue-700 text-sm">مدیریت امن و سریع داده‌ها و روابط در محیط ابری</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <div>
-                                <h3 className="font-bold text-blue-900 mb-1">API‌ها</h3>
-                                <p className="text-blue-700 text-sm">رابط‌های کاربردی سریع برای اتصال frontend به backend</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                            <div>
-                                <h3 className="font-bold text-blue-900 mb-1">میز خدمت</h3>
-                                <p className="text-blue-700 text-sm">پنل مدیریتی جامع برای مشاهده و مانیتورینگ</p>
-                            </div>
-                        </div>
+        <section dir="rtl" className="py-16 px-4 bg-white">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-10 items-center lg:items-start">
+                {/* Right Column: Title and Text */}
+                <div className="flex-1 text-center lg:text-right">
+                    <h2 className="text-3xl font-extrabold text-blue-900 mb-6">میز خدمات</h2>
+                    <div className="space-y-4">
+                        <p className="text-gray-700 leading-8">
+                            داشبورد مدیریتی این زیرساخت ابری با هدف ساده سازی فرآیند توسعه و استقرار سرویس های شما طراحی شده است. در این محیط، توسعه دهندگان می توانند به صورت یکپارچه به مدیریت داده ها، کنترل دسترسی، مانیتورینگ سرویس ها و پشتیبانی از API ها بپردازند.
+                        </p>
+                        <p className="text-gray-700 leading-8">
+                            طراحی این پنل با رویکرد شفافیت، امنیت و پایداری بالا انجام شده و به سازمان ها، شرکت های دانش بنیان و تیم های نرم افزاری کمک می کند تا بدون درگیری با پیچیدگی های زیرساختی، تمرکز خود را بر توسعه خدمات نوآورانه بگذارند.
+                        </p>
+                        <p className="text-gray-700 leading-8">
+                            امکانات میز خدمت به گونه ای توسعه یافته که تمام مراحل ایجاد، استقرار و نگهداری پروژه های ابری در یک محیط واحد قابل انجام باشد.
+                        </p>
                     </div>
                 </div>
-                <div className="order-1 lg:order-2">
-                    <div className="bg-gray-100 p-8 rounded-xl shadow">
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="bg-white p-4 rounded-lg shadow border-r-4 border-gray-200">
-                                <div className="font-bold text-sm text-gray-700 mb-2">Dashboard</div>
-                                <div className="text-xs text-gray-600">Overview of services and analytics</div>
-                            </div>
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <div className="font-bold text-sm text-gray-700 mb-2">Database</div>
-                                <div className="text-xs text-gray-600">Data management and security</div>
-                            </div>
+
+                {/* Left Column: Images */}
+                <div className="flex-1 w-full mt-8 lg:mt-0">
+                    <div className="relative max-w-xl mx-auto">
+                        <div className="absolute -top-8 -left-8 w-full h-full bg-gray-200 rounded-2xl shadow-lg border border-gray-100 hidden md:block" />
+                        <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                            <img
+                                src="https://picsum.photos/980/620?random=65"
+                                alt="Demo Screenshot"
+                                className="w-full h-auto object-cover"
+                            />
                         </div>
                     </div>
                 </div>

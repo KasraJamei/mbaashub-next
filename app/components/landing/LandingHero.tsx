@@ -5,17 +5,17 @@ export default function LandingHero() {
     return (
         <section className="bg-gradient-to-b from-blue-50 to-white pt-8 pb-12 px-4" dir="rtl">
             <div className="max-w-7xl mx-auto flex flex-col gap-8">
-                <div className="w-full flex justify-end mb-6">
-                    <div className="max-w-2xl flex flex-col items-end text-right">
-                        <h1 className="text-blue-900 font-extrabold text-3xl md:text-4xl mb-2 whitespace-nowrap">
+                <div className="w-full flex justify-start mb-6">
+                    <div className="max-w-2xl flex flex-col items-start text-right">
+                        <h1 className="text-blue-900 font-extrabold text-3xl md:text-4xl mb-2">
                             زیرساخت ابری برای توسعه‌دهنده‌ها
                         </h1>
-                        <p className="text-blue-700 text-base md:text-lg mb-2 leading-relaxed">
+                        <p className="text-blue-700 text-base md:text-lg mb-4 leading-relaxed">
                             سریع‌تر اپلیکیشن بساز، بدون نیاز به سرور یا تنظیمات پیچیده دیتابیس،
                             <br />
                             احراز هویت، فایل و APIها، همه در یک پلتفرم ابری.
                         </p>
-                        <button className="bg-blue-900 text-white rounded-xl px-7 py-3 font-semibold hover:bg-blue-800 transition self-end">
+                        <button className="bg-blue-900 text-white rounded-xl px-7 py-3 font-semibold hover:bg-blue-800 transition">
                             ساخت اولین پروژه
                         </button>
                     </div>
@@ -35,6 +35,20 @@ export default function LandingHero() {
                             </div>
                         </div>
                         <button className="w-full text-blue-800 bg-white hover:bg-gray-100 rounded-xl py-3 font-medium transition flex items-center justify-center gap-2">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={2}
+                                stroke="currentColor"
+                                className="w-5 h-5"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                />
+                            </svg>
                             میز خدمات
                         </button>
                     </Card>
