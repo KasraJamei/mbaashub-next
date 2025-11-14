@@ -207,7 +207,7 @@ export const LoginForm = () => {
                                 href="/auth?view=register"
                                 className="text-blue-600 hover:underline"
                             >
-                                ثبت نام کنید
+                                ثبت نام
                             </Link>
                         </p>
                         <p className="mt-2">
