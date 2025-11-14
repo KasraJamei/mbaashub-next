@@ -3,40 +3,35 @@
 
 import React, { useState, useEffect } from 'react';
 import { IdentityTabs } from '@/app/components/Auth/IdentityTabs';
-import { Trash2, UserX, Key, Search, Plus, RefreshCw, X, ChevronDown } from 'lucide-react';
+import { Trash2, UserX, Key, Search, Plus, RefreshCw, X } from 'lucide-react';
 import { useRoles } from '@/app/contexts/RolesContext';
 import { Notification } from '@/app/components/Shared/Notification';
 import { useNotification } from '@/hooks/useNotification';
+import {
+    getAllUsers as authGetAllUsers,
+    saveAllUsers as authSaveAllUsers,
+    getCurrentUser,
+    removeAuthToken,
+} from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 interface User {
-    id: number;
     email: string;
+    username: string;
+    password: string;
+    emailNorm: string;
+    usernameNorm: string;
+    id: number;
     role?: string;
     lastLogin: string;
     createdDate: string;
     status: string;
 }
 
-const defaultUsers: User[] = [
-    {
-        id: 3215,
-        email: 'test@gmail.com',
-        role: 'ادمین سیستم',
-        lastLogin: '15:34 ، 1404/08/17',
-        createdDate: '1404/06/17',
-        status: 'حساب فعال',
-    },
-    {
-        id: 2654,
-        email: 'test2@gmail.com',
-        role: 'کاربر عادی',
-        lastLogin: '10:34 ، 1404/08/05',
-        createdDate: '1404/06/21',
-        status: 'در انتظار تایید',
-    },
-];
+const defaultUsers: User[] = [];
 
 const IdentityUsersPage = () => {
+    const router = useRouter();
     const { roles } = useRoles();
 
     const [users, setUsers] = useState<User[]>(defaultUsers);
@@ -47,34 +42,62 @@ const IdentityUsersPage = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const [newUser, setNewUser] = useState({ email: '', role: '', password: '' });
+    const [newUser, setNewUser] = useState({
+        email: '',
+        username: '',
+        role: '',
+        password: '',
+    });
+
     const [editUser, setEditUser] = useState<User | null>(null);
 
-    const [errors, setErrors] = useState({ email: '', role: '', password: '' });
+    const [errors, setErrors] = useState({
+        email: '',
+        username: '',
+        role: '',
+        password: '',
+    });
+
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<{ email: string; username: string } | null>(null);
 
     const { notification, showNotification, hideNotification } = useNotification();
 
     useEffect(() => {
-        try {
-            const storedUsers = localStorage.getItem('users');
-            if (storedUsers) {
-                const parsed: User[] = JSON.parse(storedUsers);
-                setUsers(parsed);
-            }
-        } catch (error) {
-            console.error('Error parsing users from localStorage:', error);
-        }
+        const baseUsers = authGetAllUsers();
+        const mapped: User[] = baseUsers.map((u, index) => ({
+            email: u.email,
+            username: u.username,
+            password: u.password,
+            emailNorm: u.emailNorm,
+            usernameNorm: u.usernameNorm,
+            id: index + 1,
+            role: 'کاربر عادی',
+            lastLogin: u.lastLogin ?? 'هرگز',
+            createdDate: new Date().toLocaleDateString('fa-IR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }),
+            status: 'حساب فعال',
+        }));
+        setUsers(mapped);
+        const cu = getCurrentUser();
+        if (cu) setCurrentUser(cu);
         setHydrated(true);
     }, []);
 
     useEffect(() => {
-        if (hydrated) {
-            try {
-                localStorage.setItem('users', JSON.stringify(users));
-            } catch (error) {
-                console.error('Error saving users to localStorage:', error);
-            }
-        }
+        if (!hydrated) return;
+        const authUsers = users.map((u) => ({
+            email: u.email,
+            username: u.username,
+            password: u.password,
+            emailNorm: u.emailNorm,
+            usernameNorm: u.usernameNorm,
+        }));
+        authSaveAllUsers(authUsers);
     }, [users, hydrated]);
 
     useEffect(() => {
@@ -82,26 +105,32 @@ const IdentityUsersPage = () => {
             if (e.key === 'Escape') {
                 if (showModal) handleCloseModal();
                 if (showEditModal) handleCloseEditModal();
+                if (deleteModalOpen) handleCancelDelete();
             }
         };
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showModal, showEditModal]);
+    }, [showModal, showEditModal, deleteModalOpen]);
 
     if (!hydrated) {
         return null;
     }
 
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalize = (value: string | undefined | null) =>
+        (value ?? '').trim().toLowerCase();
+
+    const normalizedSearch = normalize(searchTerm);
 
     const filteredUsers = users.filter((u) => {
         const email = (u.email ?? '').toLowerCase();
+        const username = (u.username ?? '').toLowerCase();
         const role = (u.role ?? '').toLowerCase();
         const idStr = (u.id ?? '').toString();
 
         return (
             email.includes(normalizedSearch) ||
+            username.includes(normalizedSearch) ||
             role.includes(normalizedSearch) ||
             idStr.includes(normalizedSearch)
         );
@@ -116,43 +145,66 @@ const IdentityUsersPage = () => {
     };
 
     const validateForm = (isEdit = false) => {
-        const e = { email: '', role: '', password: '' };
+        const e = { email: '', username: '', role: '', password: '' };
         let ok = true;
 
-        const currentUser = isEdit ? editUser : newUser;
-        const currentEmail = (currentUser?.email || '').trim().toLowerCase();
-        const currentRole = (currentUser?.role || '').trim().toLowerCase();
+        const current = isEdit ? editUser : null;
 
-        if (!currentEmail) {
+        const email = isEdit ? (current?.email || '') : newUser.email;
+        const username = isEdit ? (current?.username || '') : newUser.username;
+        const role = isEdit ? (current?.role || '') : newUser.role;
+        const password = isEdit ? current?.password || '' : newUser.password;
+
+        const emailNorm = normalize(email);
+        const usernameNorm = normalize(username);
+
+        if (!emailNorm) {
             e.email = 'ایمیل الزامی است';
             ok = false;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentEmail)) {
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
             e.email = 'فرمت ایمیل صحیح نیست';
             ok = false;
         } else {
-            const duplicate = users.some((u) => {
-                const userEmail = (u.email || '').trim().toLowerCase();
-                if (isEdit && currentUser && 'id' in currentUser) {
-                    return u.id !== currentUser.id && userEmail === currentEmail;
+            const dup = users.some((u) => {
+                const uEmailNorm = normalize(u.email);
+                if (isEdit && current) {
+                    return uEmailNorm === emailNorm && u.email !== current.email;
                 }
-                return userEmail === currentEmail;
+                return uEmailNorm === emailNorm;
             });
-            if (duplicate) {
+            if (dup) {
                 e.email = 'این ایمیل قبلاً ثبت شده است';
                 ok = false;
             }
         }
 
-        if (!currentRole) {
+        if (!usernameNorm) {
+            e.username = 'نام کاربری الزامی است';
+            ok = false;
+        } else {
+            const dupUser = users.some((u) => {
+                const uUsernameNorm = normalize(u.username);
+                if (isEdit && current) {
+                    return uUsernameNorm === usernameNorm && u.username !== current.username;
+                }
+                return uUsernameNorm === usernameNorm;
+            });
+            if (dupUser) {
+                e.username = 'این نام کاربری قبلاً ثبت شده است';
+                ok = false;
+            }
+        }
+
+        if (!role) {
             e.role = 'نقش کاربر الزامی است';
             ok = false;
         }
 
         if (!isEdit) {
-            if (!newUser.password) {
+            if (!password) {
                 e.password = 'رمز عبور الزامی است';
                 ok = false;
-            } else if (newUser.password.length < 8) {
+            } else if (password.length < 8) {
                 e.password = 'رمز عبور باید حداقل 8 کاراکتر باشد';
                 ok = false;
             }
@@ -167,10 +219,19 @@ const IdentityUsersPage = () => {
 
         const now = Date.now();
 
+        const email = newUser.email.trim();
+        const username = newUser.username.trim();
+        const emailNorm = normalize(email);
+        const usernameNorm = normalize(username);
+
         const user: User = {
             id: now,
-            email: newUser.email.trim(),
-            role: newUser.role.trim(),
+            email,
+            username,
+            password: newUser.password,
+            emailNorm,
+            usernameNorm,
+            role: newUser.role,
             lastLogin: 'هرگز',
             createdDate: new Date().toLocaleDateString('fa-IR', {
                 year: 'numeric',
@@ -185,44 +246,26 @@ const IdentityUsersPage = () => {
         showNotification('success', 'کاربر جدید با موفقیت ایجاد شد');
     };
 
-    const handleDeleteUser = (userId: number, userEmail: string) => {
-        setUsers((prev) => prev.filter((u) => u.id !== userId));
-        showNotification('error', `کاربر (${userEmail}) با موفقیت حذف شد`);
-    };
-
-    const handleDeactivateUser = (userId: number, userEmail: string) => {
-        let newStatus = '';
-        setUsers((prev) =>
-            prev.map((u) => {
-                if (u.id === userId) {
-                    newStatus = u.status === 'حساب فعال' ? 'غیرفعال' : 'حساب فعال';
-                    return { ...u, status: newStatus };
-                }
-                return u;
-            })
-        );
-        showNotification('warning', `حساب کاربر ${userEmail} ${newStatus} شد`);
-    };
-
-    const handleResetPassword = (userEmail: string) => {
-        showNotification('success', `رمز عبور کاربر ${userEmail} با موفقیت تنظیم مجدد شد`);
-    };
-
     const handleEditClick = (user: User) => {
         setEditUser(user);
         setShowEditModal(true);
-        setErrors({ email: '', role: '', password: '' });
+        setErrors({ email: '', username: '', role: '', password: '' });
     };
 
     const handleUpdateUser = () => {
-        if (!validateForm(true) || !editUser) return;
+        if (!editUser) return;
+        if (!validateForm(true)) return;
 
-        const updatedEmail = editUser.email.trim();
-        const updatedRole = (editUser.role || '').trim();
+        const email = editUser.email.trim();
+        const username = editUser.username.trim();
+        const emailNorm = normalize(email);
+        const usernameNorm = normalize(username);
 
         setUsers((prev) =>
             prev.map((u) =>
-                u.id === editUser.id ? { ...u, email: updatedEmail, role: updatedRole } : u
+                u.id === editUser.id
+                    ? { ...editUser, email, username, emailNorm, usernameNorm }
+                    : u
             )
         );
 
@@ -230,16 +273,30 @@ const IdentityUsersPage = () => {
         showNotification('success', 'اطلاعات کاربر با موفقیت ویرایش شد');
     };
 
+    const handleDeactivateUser = (userId: number, userEmail: string) => {
+        showNotification(
+            'warning',
+            'عملیات غیرفعال کردن حساب هنوز پیاده‌سازی نشده است.'
+        );
+    };
+
+    const handleResetPassword = (userEmail: string) => {
+        showNotification(
+            'warning',
+            'تنظیم مجدد رمز عبور هنوز پیاده‌سازی نشده است.'
+        );
+    };
+
     const handleCloseModal = () => {
         setShowModal(false);
-        setNewUser({ email: '', role: '', password: '' });
-        setErrors({ email: '', role: '', password: '' });
+        setNewUser({ email: '', username: '', role: '', password: '' });
+        setErrors({ email: '', username: '', role: '', password: '' });
     };
 
     const handleCloseEditModal = () => {
         setShowEditModal(false);
         setEditUser(null);
-        setErrors({ email: '', role: '', password: '' });
+        setErrors({ email: '', username: '', role: '', password: '' });
     };
 
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -252,6 +309,44 @@ const IdentityUsersPage = () => {
         if (e.target === e.currentTarget) {
             handleCloseEditModal();
         }
+    };
+
+    const handleDeleteClick = (user: User) => {
+        setUserToDelete(user);
+        setDeleteModalOpen(true);
+    };
+
+    const handleCancelDelete = () => {
+        setUserToDelete(null);
+        setDeleteModalOpen(false);
+    };
+
+    const handleConfirmDelete = () => {
+        if (!userToDelete) return;
+
+        const updated = users.filter((u) => u.id !== userToDelete.id);
+        setUsers(updated);
+
+        const isSelf =
+            currentUser &&
+            (normalize(currentUser.email) === normalize(userToDelete.email) ||
+                normalize(currentUser.username) === normalize(userToDelete.username));
+
+        if (isSelf) {
+            showNotification(
+                'error',
+                'حساب کاربری شما حذف شد. برای ادامه نیاز است دوباره ثبت نام کنید.'
+            );
+            removeAuthToken();
+            setTimeout(() => {
+                router.push('/auth?view=register');
+            }, 1200);
+        } else {
+            showNotification('success', `کاربر (${userToDelete.email}) با موفقیت حذف شد`);
+        }
+
+        setUserToDelete(null);
+        setDeleteModalOpen(false);
     };
 
     return (
@@ -313,7 +408,7 @@ const IdentityUsersPage = () => {
                             <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="جستجو بر اساس ایمیل یا شناسه..."
+                                placeholder="جستجو بر اساس ایمیل، نام کاربری یا شناسه..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pr-10 pl-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm"
@@ -355,7 +450,10 @@ const IdentityUsersPage = () => {
                                         ایمیل
                                     </th>
                                     <th className="text-right py-3 px-4 font-medium text-gray-700">
-                                        نقش کاربر
+                                        نام کاربری
+                                    </th>
+                                    <th className="text-right py-3 px-4 font-medium text-gray-700">
+                                        نقش
                                     </th>
                                     <th className="text-right py-3 px-4 font-medium text-gray-700">
                                         آخرین ورود
@@ -380,6 +478,9 @@ const IdentityUsersPage = () => {
                                         <td className="py-3 px-4 text-gray-900">{user.id}</td>
                                         <td className="py-3 px-4 text-gray-900 font-medium">
                                             {user.email}
+                                        </td>
+                                        <td className="py-3 px-4 text-gray-900">
+                                            {user.username}
                                         </td>
                                         <td className="py-3 px-4 text-gray-900">
                                             {user.role ?? '-'}
@@ -426,7 +527,10 @@ const IdentityUsersPage = () => {
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        handleDeactivateUser(user.id, user.email)
+                                                        handleDeactivateUser(
+                                                            user.id,
+                                                            user.email
+                                                        )
                                                     }
                                                     className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors"
                                                     style={{ cursor: 'pointer' }}
@@ -450,7 +554,7 @@ const IdentityUsersPage = () => {
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        handleDeleteUser(user.id, user.email)
+                                                        handleDeleteClick(user)
                                                     }
                                                     className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
                                                     style={{ cursor: 'pointer' }}
@@ -491,6 +595,10 @@ const IdentityUsersPage = () => {
                                 <div>
                                     <p className="text-sm text-gray-500">ایمیل</p>
                                     <p className="text-gray-900 break-all">{user.email}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">نام کاربری</p>
+                                    <p className="text-gray-900 break-all">{user.username}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -535,9 +643,7 @@ const IdentityUsersPage = () => {
                                         تنظیم رمز
                                     </button>
                                     <button
-                                        onClick={() =>
-                                            handleDeleteUser(user.id, user.email)
-                                        }
+                                        onClick={() => handleDeleteClick(user)}
                                         className="flex-1 text-sm text-red-600 hover:text-red-700 py-2 px-3 rounded-lg hover:bg-red-50 transition-colors"
                                         style={{ cursor: 'pointer' }}
                                     >
@@ -583,110 +689,106 @@ const IdentityUsersPage = () => {
 
                         <div className="space-y-4 sm:space-y-5">
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-                                    ایمیل
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    ایمیل <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="email"
                                     value={newUser.email}
-                                    onChange={(e) => {
+                                    onChange={(e) =>
                                         setNewUser({
                                             ...newUser,
                                             email: e.target.value,
-                                        });
-                                        setErrors({
-                                            ...errors,
-                                            email: '',
-                                        });
-                                    }}
-                                    className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:ring-2 focus:ring-offset-2 transition-all text-sm sm:text-base ${errors.email
-                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-300'
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.email
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
                                         }`}
-                                    placeholder="example@email.com"
                                 />
                                 {errors.email && (
-                                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-slideDown">
-                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                    <p className="mt-1 text-xs text-red-600">
                                         {errors.email}
                                     </p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-                                    نقش کاربر
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    نام کاربری <span className="text-red-500">*</span>
                                 </label>
-                                <div className="relative">
-                                    <select
-                                        value={newUser.role}
-                                        onChange={(e) => {
-                                            setNewUser({
-                                                ...newUser,
-                                                role: e.target.value,
-                                            });
-                                            setErrors({
-                                                ...errors,
-                                                role: '',
-                                            });
-                                        }}
-                                        className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 border-2 rounded-xl focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all appearance-none bg-white text-sm sm:text-base ${errors.role
-                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                                            : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500 hover:border-blue-300'
-                                            }`}
-                                    >
-                                        <option value="">انتخاب کنید</option>
-                                        {roles.map((role) => (
-                                            <option
-                                                key={role.id}
-                                                value={role.name}
-                                            >
-                                                {role.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                                </div>
+                                <input
+                                    type="text"
+                                    value={newUser.username}
+                                    onChange={(e) =>
+                                        setNewUser({
+                                            ...newUser,
+                                            username: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.username
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
+                                        }`}
+                                />
+                                {errors.username && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {errors.username}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    نقش کاربر <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={newUser.role}
+                                    onChange={(e) =>
+                                        setNewUser({
+                                            ...newUser,
+                                            role: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.role
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
+                                        }`}
+                                >
+                                    <option value="">انتخاب کنید</option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.name}>
+                                            {role.name}
+                                        </option>
+                                    ))}
+                                </select>
                                 {errors.role && (
-                                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-slideDown">
-                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                    <p className="mt-1 text-xs text-red-600">
                                         {errors.role}
                                     </p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
-                                    رمز عبور
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    رمز عبور <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="password"
                                     value={newUser.password}
-                                    onChange={(e) => {
+                                    onChange={(e) =>
                                         setNewUser({
                                             ...newUser,
                                             password: e.target.value,
-                                        });
-                                        setErrors({
-                                            ...errors,
-                                            password: '',
-                                        });
-                                    }}
-                                    className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:ring-2 focus:ring-offset-2 transition-all text-sm sm:text-base ${errors.password
-                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500 hover:border-gray-300'
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.password
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
                                         }`}
-                                    placeholder="حداقل 8 کاراکتر"
                                 />
                                 {errors.password && (
-                                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-slideDown">
-                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                    <p className="mt-1 text-xs text-red-600">
                                         {errors.password}
                                     </p>
                                 )}
@@ -720,7 +822,7 @@ const IdentityUsersPage = () => {
                     onClick={handleBackdropClickEdit}
                 >
                     <div className="bg-white rounded-2xl p-5 sm:p-6 md:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
-                        <div className="flex justify-between items-center mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-gray-100">
+                        <div className="flex justify بین items-center mb-6 sm:mb-۸ pb-3 sm:pb-4 border-b border-gray-100">
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
                                     <svg
@@ -752,81 +854,81 @@ const IdentityUsersPage = () => {
 
                         <div className="space-y-4 sm:space-y-5">
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                    <span className="w-1.5 h-1.5 bg-purple-600 rounded-full"></span>
-                                    ایمیل
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    ایمیل <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="email"
                                     value={editUser.email}
-                                    onChange={(e) => {
-                                        if (editUser) {
-                                            setEditUser({
-                                                ...editUser,
-                                                email: e.target.value,
-                                            });
-                                        }
-                                        setErrors({
-                                            ...errors,
-                                            email: '',
-                                        });
-                                    }}
-                                    className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 rounded-xl focus:ring-2 focus:ring-offset-2 transition-all text-sm sm:text-base ${errors.email
-                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                                        : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500 hover:border-gray-300'
+                                    onChange={(e) =>
+                                        setEditUser({
+                                            ...editUser,
+                                            email: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.email
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
                                         }`}
-                                    placeholder="example@email.com"
                                 />
                                 {errors.email && (
-                                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-slideDown">
-                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                    <p className="mt-1 text-xs text-red-600">
                                         {errors.email}
                                     </p>
                                 )}
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                    <span className="w-1.5 h-1.5 bg-purple-600 rounded-full"></span>
-                                    نقش کاربر
-                                    <span className="text-red-500">*</span>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    نام کاربری <span className="text-red-500">*</span>
                                 </label>
-                                <div className="relative">
-                                    <select
-                                        value={editUser.role ?? ''}
-                                        onChange={(e) => {
-                                            if (editUser) {
-                                                setEditUser({
-                                                    ...editUser,
-                                                    role: e.target.value,
-                                                });
-                                            }
-                                            setErrors({
-                                                ...errors,
-                                                role: '',
-                                            });
-                                        }}
-                                        className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 border-2 rounded-xl focus:ring-2 focus:ring-offset-2 cursor-pointer transition-all appearance-none bg-white text-sm sm:text-base ${errors.role
-                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                                            : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500 hover:border-purple-300'
-                                            }`}
-                                    >
-                                        <option value="">انتخاب کنید</option>
-                                        {roles.map((role) => (
-                                            <option
-                                                key={role.id}
-                                                value={role.name}
-                                            >
-                                                {role.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                                </div>
+                                <input
+                                    type="text"
+                                    value={editUser.username}
+                                    onChange={(e) =>
+                                        setEditUser({
+                                            ...editUser,
+                                            username: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.username
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
+                                        }`}
+                                />
+                                {errors.username && (
+                                    <p className="mt-1 text-xs text-red-600">
+                                        {errors.username}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 text-right mb-1">
+                                    نقش کاربر <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={editUser.role ?? ''}
+                                    onChange={(e) =>
+                                        setEditUser({
+                                            ...editUser,
+                                            role: e.target.value,
+                                        })
+                                    }
+                                    className={`w-full p-2 border-2 rounded-md bg-white ${errors.role
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200'
+                                        }`}
+                                >
+                                    <option value="">انتخاب کنید</option>
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.name}>
+                                            {role.name}
+                                        </option>
+                                    ))}
+                                </select>
                                 {errors.role && (
-                                    <p className="mt-2 text-xs text-red-600 flex items-center gap-1 animate-slideDown">
-                                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                                    <p className="mt-1 text-xs text-red-600">
                                         {errors.role}
                                     </p>
                                 )}
@@ -860,6 +962,76 @@ const IdentityUsersPage = () => {
                                 style={{ cursor: 'pointer' }}
                             >
                                 انصراف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {deleteModalOpen && userToDelete && (
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-fadeIn backdrop-blur-sm"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) handleCancelDelete();
+                    }}
+                >
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 md:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl animate-scaleIn">
+                        <div className="flex justify-between items-center mb-6 sm:mb-8 pb-3 sm:pb-4 border-b border-gray-100">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                </div>
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+                                    حذف کاربر
+                                </h2>
+                            </div>
+                            <button
+                                onClick={handleCancelDelete}
+                                className="p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 transition-all group"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-center">
+                            {currentUser &&
+                                (normalize(currentUser.email) ===
+                                    normalize(userToDelete.email) ||
+                                    normalize(currentUser.username) ===
+                                    normalize(userToDelete.username)) ? (
+                                <>
+                                    <p className="text-base text-gray-700">
+                                        شما در حال حذف حساب کاربری خودتان هستید. بعد از حذف،
+                                        دسترسی شما به سامانه قطع خواهد شد.
+                                    </p>
+                                    <p className="text-sm text-red-600 font-semibold">
+                                        این عملیات غیرقابل بازگشت است و برای ادامه باید دوباره
+                                        ثبت نام کنید.
+                                    </p>
+                                </>
+                            ) : (
+                                <p className="text-base text-gray-700">
+                                    آیا از حذف کاربر {userToDelete.email} اطمینان دارید؟
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                            <button
+                                onClick={handleConfirmDelete}
+                                className="flex-1 px-4 sm:px-6 py-3 sm:py-3.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl transition-all font-semibold text-sm shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                بله، حذف کن
+                            </button>
+                            <button
+                                onClick={handleCancelDelete}
+                                className="flex-1 px-4 sm:px-6 py-3 sm:py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all font-semibold text-sm active:scale-95"
+                                style={{ cursor: 'pointer' }}
+                            >
+                                خیر، انصراف
                             </button>
                         </div>
                     </div>
