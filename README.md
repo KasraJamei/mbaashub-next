@@ -31,6 +31,16 @@
 
 ---
 
+## Screenshots
+
+![Landing Page](screenshots/landingpage.png)
+![Login Page](screenshots/loginpage.png)
+![Auth Page – Step 1](screenshots/authpage1.png)
+![Auth Page – Step 2](screenshots/authpage2.png)
+![Auth Page – Step 3](screenshots/authpage3.png)
+
+---
+
 ## Getting Started
 
 ### Prerequisites
