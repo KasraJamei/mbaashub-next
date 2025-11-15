@@ -7,11 +7,11 @@
 
 ## Tech Stack
 
-![Next.js](https://img.shields.io/badge/Next.js-13%2B-000000?style=for-the-badge&logo=nextdotjs)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)
-![Tailwind](https://img.shields.io/badge/TailwindCSS-3.x-06B6D4?style=for-the-badge&logo=tailwindcss)
-![AppRouter](https://img.shields.io/badge/Next.js-App_Router-000000?style=for-the-badge&logo=nextdotjs)
+![Next.js](https://img.shields.io/badge/Next.js-latest-000000?style=for-the-badge&logo=nextdotjs)
+![React](https://img.shields.io/badge/React-latest-61DAFB?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-latest-3178C6?style=for-the-badge&logo=typescript)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-latest-06B6D4?style=for-the-badge&logo=tailwindcss)
+![AppRouter](https://img.shields.io/badge/Next.js_App_Router-latest-000000?style=for-the-badge&logo=nextdotjs)
 
 ---
 
