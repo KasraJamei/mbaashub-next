@@ -10,7 +10,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15.5.2-000000?style=for-the-badge&logo=nextdotjs)
 ![React](https://img.shields.io/badge/React-19.2.0-61DAFB?style=for-the-badge&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?style=for-the-badge&logo=typescript)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.17-06B6D4?style=for-the-badge&logo=tailwindcss)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-4.1.17-06B6D4?style=for-the-badge&logo=tailwindcss)
 ![AppRouter](https://img.shields.io/badge/Next.js_App_Router-13.4%2B-000000?style=for-the-badge&logo=nextdotjs)
 
 ---
