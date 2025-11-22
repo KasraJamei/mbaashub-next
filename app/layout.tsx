@@ -28,7 +28,7 @@ const vazirmatn = localFont({
 const inter = localFont({
   src: [
     {
-      path: '../public/fonts/inter/Inte-Regular.ttf',
+      path: '../public/fonts/inter/Inter-Regular.ttf',
       weight: '400',
       style: 'normal',
     },
